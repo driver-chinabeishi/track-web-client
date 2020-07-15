@@ -10,6 +10,7 @@ class TrackMap extends React.Component {
   constructor (props) {
     super(props)
     this.state = {
+      loading: false,
       position: {
         lng: 0,
         lat: 0,
@@ -17,8 +18,11 @@ class TrackMap extends React.Component {
         kT: 0
       }
     }
-    this.initMap()
 
+  }
+
+  componentDidMount() {
+    this.initMap()
   }
 
   initMap () {
@@ -32,8 +36,20 @@ class TrackMap extends React.Component {
       this.geolocation = new AMap.Geolocation({
         offset: [0,0],
         convert: true,
+        timeout: 10000, // 超时时间
         extensions: 'all', // 是否需要详细的逆地理编码信息，默认为'base'只返回基本信息，可选'all',
-        // noIpLocate: true, // 是否彬IP精确定位
+        // noIpLocate: 0, // 是否禁用IP精确定位，默认为0，0:都用 1:手机上不用 2:PC上不用 3:都不用
+        // noGeoLocation: 0, // 是否禁用浏览器原生定位，默认为0，0:都用 1:手机上不用 2:PC上不用 3:都不用
+
+        enableHighAccuracy: true, // 是否使用高精度定位，默认：true
+        maximumAge: 0, // 定位缓存，默认：0
+        showButton: true, // 显示定位按钮，默认：true
+        buttonPosition: 'LB',
+        buttonOffset: new AMap.Pixel(10, 20),
+        showMarker: true,
+        panToLocation: true,
+        zoomToAccuracy: true
+
       })
       // setInterval(() => {
         this.getPosition()
@@ -45,23 +61,26 @@ class TrackMap extends React.Component {
   }
 
   getPosition () {
-    this.geolocation.getCurrentPosition((type, result) => {
+    this.setState({loading: true})
+    this.geolocation.getCurrentPosition((status, result) => {
       console.log('=====', result)
-      if (result && result.position) {
+      this.setState({loading: false})
+      if (status === 'complete' && result && result.position) {
         this.setState({position: result.position})
-        this.map.setCenter([result.position.KL, result.position.kT], true, 1000)
-        this.map.setZoom(18)
+        // this.map.setCenter([result.position.KL, result.position.kT], true, 1000)
+        // this.map.setZoom(18)
       }
-
     })
   }
 
   render () {
     let {lng, lat, kT, KL} = this.state.position
+    let {loading} = this.state
     console.log('----', lng, lat)
     return (
       <div className="track-map g-flex g-flex-v">
         <div className="g-flex g-w100 g-h-100 g-flex-wap">
+          <div className="g-ml-12">定位状态：{loading ? '定位中...' : '定位结束'}</div>
           <div className="g-ml-12">lng:  {lng}</div>
           <div className="g-ml-12"> | lat: {lat}</div>
           <div className="g-ml-12"> | KL: {KL}</div>
